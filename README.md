@@ -1,126 +1,110 @@
-# .NET Agent Skills
+# dotnet-skills
 
-[![Dashboard](https://github.com/dotnet/skills/actions/workflows/pages/pages-build-deployment/badge.svg)](https://dotnet.github.io/skills/)
+DSH 技能分组仓：**dotnet-skills**
 
-This repository contains the .NET team's curated set of core skills and custom agents for coding agents. For information about the Agent Skills standard, see [agentskills.io](https://agentskills.io).
+- **上游**：https://github.com/dotnet/skills
+- **说明**：本仓内容以本机实际使用的版本为准（可能已对上游做过改名/翻译/本机适配）。
+  上游只作祖先与对照——**不要用上游覆盖本地**（见 MyAI `docs/adr/0006`）。
 
-> [!TIP]
-> **Compare skill value:** [Open the Skill Value dashboard](https://dotnet.github.io/skills/)
-> See token use, elapsed time, activation, and not-passed rates by plugin, skill,
-> executor model, and judge model.
+## 内容
 
-## What's Included
+- `analyzing-dotnet-performance`
+- `android-tombstone-symbolication`
+- `apple-crash-symbolication`
+- `assertion-quality`
+- `author-component`
+- `binlog-failure-analysis`
+- `binlog-generation`
+- `build-parallelism`
+- `build-perf-baseline`
+- `build-perf-diagnostics`
+- `check-bin-obj-clash`
+- `clr-activation-debugging`
+- `code-testing-agent`
+- `code-testing-extensions`
+- `collect-user-input`
+- `configure-auth`
+- `configuring-opentelemetry-dotnet`
+- `convert-blazor-server-to-webapp`
+- `convert-to-cpm`
+- `coordinate-components`
+- `coverage-analysis`
+- `crap-score`
+- `create-blazor-project`
+- `csharp-scripts`
+- `detect-static-dependencies`
+- `directory-build-organization`
+- `dotnet-aot-compat`
+- `dotnet-maui-doctor`
+- `dotnet-pinvoke`
+- `dotnet-trace-collect`
+- `dotnet-webapi`
+- `dump-collect`
+- `eval-performance`
+- `exp-mock-usage-analysis`
+- `exp-simd-vectorization`
+- `exp-test-maintainability`
+- `extension-points`
+- `fetch-and-send-data`
+- `filter-syntax`
+- `find-untested-sources`
+- `generate-testability-wrappers`
+- `grade-tests`
+- `including-generated-files`
+- `incremental-build`
+- `item-management`
+- `maui-app-lifecycle`
+- `maui-collectionview`
+- `maui-data-binding`
+- `maui-dependency-injection`
+- `maui-safe-area`
+- `maui-shell-navigation`
+- `maui-theming`
+- `mcp-csharp-create`
+- `mcp-csharp-debug`
+- `mcp-csharp-publish`
+- `mcp-csharp-test`
+- `microbenchmarking`
+- `migrate-dotnet10-to-dotnet11`
+- `migrate-dotnet8-to-dotnet9`
+- `migrate-dotnet9-to-dotnet10`
+- `migrate-mstest-v1v2-to-v3`
+- `migrate-mstest-v3-to-v4`
+- `migrate-nullable-references`
+- `migrate-static-to-wrapper`
+- `migrate-vstest-to-mtp`
+- `migrate-xunit-to-mstest`
+- `migrate-xunit-to-xunit-v3`
+- `minimal-api-file-upload`
+- `msbuild-antipatterns`
+- `msbuild-modernization`
+- `msbuild-server`
+- `mtp-hot-reload`
+- `nuget-trusted-publishing`
+- `optimizing-ef-core-queries`
+- `plan-ui-change`
+- `platform-detection`
+- `property-patterns`
+- `resolve-project-references`
+- `run-tests`
+- `setup-local-sdk`
+- `support-prerendering`
+- `system-text-json-net11`
+- `target-authoring`
+- `technology-selection`
+- `template-authoring`
+- `template-comparison`
+- `template-discovery`
+- `template-instantiation`
+- `template-smart-defaults`
+- `template-validation`
+- `test-analysis-extensions`
+- `test-anti-patterns`
+- `test-gap-analysis`
+- `test-smell-detection`
+- `test-tagging`
+- `thread-abort-migration`
+- `use-js-interop`
+- `writing-mstest-tests`
 
-| Plugin | Description |
-|--------|-------------|
-| [dotnet](plugins/dotnet/) | C# language server (LSP) integration for coding agents and high-level .NET development skills. |
-| [dotnet-advanced](plugins/dotnet-advanced/) | Collection of .NET skills for handling specific .NET tasks for special scenarios. |
-| [dotnet-data](plugins/dotnet-data/) | Skills for .NET data access and Entity Framework related tasks. |
-| [dotnet-diag](plugins/dotnet-diag/) | Skills for .NET performance investigations, debugging, and incident analysis. |
-| [dotnet-msbuild](plugins/dotnet-msbuild/) | Comprehensive MSBuild and .NET build skills: failure diagnosis, performance optimization, code quality, and modernization. |
-| [dotnet-nuget](plugins/dotnet-nuget/) | NuGet and .NET package management: dependency management and modernization. |
-| [dotnet-upgrade](plugins/dotnet-upgrade/) | Skills for migrating and upgrading .NET projects across framework versions, language features, and compatibility targets. |
-| [dotnet-maui](plugins/dotnet-maui/) | Skills for .NET MAUI development: environment setup, diagnostics, and troubleshooting. |
-| [dotnet-ai](plugins/dotnet-ai/) | AI and ML skills for .NET: technology selection, LLM integration, agentic workflows, RAG pipelines, MCP, and classic ML with ML.NET. |
-| [dotnet-template-engine](plugins/dotnet-template-engine/) | .NET Template Engine skills: template discovery, project scaffolding, and template authoring. |
-| [dotnet-test](plugins/dotnet-test/) | Skills for running, generating, analyzing, and improving .NET tests: test execution, filtering, platform detection, coverage, testability, and MSTest workflows. |
-| [dotnet-test-migration](plugins/dotnet-test-migration/) | Skills and an orchestrator agent for migrating .NET test frameworks and platforms: MSTest and xUnit version upgrades, xUnit-to-MSTest conversion, and VSTest to Microsoft.Testing.Platform. |
-| [dotnet-aspnetcore](plugins/dotnet-aspnetcore/) | ASP.NET Core web development skills including middleware, endpoints, real-time communication, and API patterns. |
-| [dotnet-blazor](plugins/dotnet-blazor/) | Skills for Blazor development: component authoring, interactivity, and web application patterns. |
-| [dotnet11](plugins/dotnet11/) | Skills for new .NET 11 APIs and language features. |
-
-## Installation
-
-### 🚀 Plugins - Copilot CLI / Claude Code
-
-1. Launch Copilot CLI or Claude Code
-2. Add the marketplace:
-   ```
-   /plugin marketplace add dotnet/skills
-   ```
-3. Install a plugin:
-   ```
-   /plugin install <plugin>@dotnet-agent-skills
-   ```
-4. Restart to load the new plugins
-5. View available skills:
-   ```
-   /skills
-   ```
-6. View available agents:
-   ```
-   /agents
-   ```
-7. Update plugin (on demand):
-   ```
-   /plugin update <plugin>@dotnet-agent-skills
-   ```
-
-### VS Code / VS Code Insiders (Preview)
-
-> [!IMPORTANT]  
-> VS Code plugin support is a preview feature and subject to change. You may need to enable it first.
-
-```jsonc
-// settings.json
-{
-  "chat.plugins.enabled": true,
-  "chat.plugins.marketplaces": ["dotnet/skills"]
-}
-```
-
-Once configured, type `/plugins` in Copilot Chat or use the `@agentPlugins` filter in Extensions to browse and install plugins from the marketplace.
-
-### Cursor
-
-This repository is a [Cursor plugin marketplace](https://cursor.com/docs/plugins). You can discover and install published plugins directly in Cursor:
-
-1. Open the marketplace panel in Cursor
-2. Search for `.NET` or browse [cursor.com/marketplace](https://cursor.com/marketplace)
-3. Install the desired plugins
-
-For local development or unpublished changes, import plugins from a local checkout:
-
-1. Copy or symlink your local checkout to `~/.cursor/plugins/local/dotnet-agent-skills`
-2. Restart Cursor or run **Developer: Reload Window**
-
-### Codex CLI
-
-Skills in this repository follow the [agentskills.io](https://agentskills.io) open standard
-and are compatible with [OpenAI Codex](https://developers.openai.com/codex/skills).
-
-#### Plugin marketplace (recommended)
-
-Codex CLI v0.121.0 and later supports a [plugin marketplace](https://developers.openai.com/codex/plugins).
-This repository ships a Codex-native marketplace manifest at `.agents/plugins/marketplace.json`,
-so you can register `dotnet/skills` as a marketplace and install plugins from it directly.
-
-1. Add the marketplace:
-   ```bash
-   codex plugin marketplace add dotnet/skills
-   ```
-2. Launch Codex and open the plugin browser:
-   ```
-   /plugins
-   ```
-3. Browse the `dotnet-agent-skills` tab and install the desired plugins.
-4. Update plugins on demand:
-   ```bash
-   codex plugin marketplace upgrade dotnet-agent-skills
-   ```
-
-#### Individual skills
-
-You can also install individual skills using the `skill-installer` CLI with the GitHub URL:
-
-```bash
-$ skill-installer install https://github.com/dotnet/skills/tree/main/plugins/<plugin>/skills/<skill-name>
-```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and how to add a new plugin.
-
-## License
-
-See [LICENSE](LICENSE) for details.
+由 `dsh-extensions/install-skill.sh` 软链进 `~/.dsh/skills/`。
