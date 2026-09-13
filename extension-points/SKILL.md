@@ -54,7 +54,7 @@ MSBuild imports all files in extension directories, sorted alphabetically:
 
 | Property | Resolves to | Scope |
 |---|---|---|
-| `$(MSBuildUserExtensionsPath)` | `%APPDATA%\Microsoft\MSBuild` | Per-user |
+| `$(MSBuildUserExtensionsPath)` | Windows: `%APPDATA%\Microsoft\MSBuild` · Linux/macOS: `~/.local/share/Microsoft/MSBuild` (XDG data dir) | Per-user |
 | `$(MSBuildExtensionsPath)` | MSBuild install directory | Machine-wide |
 | `$(MSBuildProjectExtensionsPath)` | `obj/` directory | Per-project (NuGet) |
 

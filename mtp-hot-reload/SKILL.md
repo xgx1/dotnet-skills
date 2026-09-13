@@ -16,6 +16,8 @@ license: MIT
 
 # MTP Hot Reload for Iterative Test Fixing
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Set up and use Microsoft Testing Platform hot reload to rapidly iterate fixes on failing tests without rebuilding between each change.
 
 ## When to Use
@@ -54,7 +56,7 @@ If the project uses VSTest, inform the user that MTP hot reload is not available
 
 Install the `Microsoft.Testing.Extensions.HotReload` package:
 
-```shell
+```bash
 dotnet add <project-path> package Microsoft.Testing.Extensions.HotReload
 ```
 
@@ -66,12 +68,20 @@ Hot reload is activated by setting the `TESTINGPLATFORM_HOTRELOAD_ENABLED` envir
 
 **Option A -- Set it in the shell before running tests:**
 
-```shell
-# PowerShell
-$env:TESTINGPLATFORM_HOTRELOAD_ENABLED = "1"
+#### Linux (bash)
 
+```bash
 # bash/zsh
 export TESTINGPLATFORM_HOTRELOAD_ENABLED=1
+
+# Or for a single run, without changing shell state
+TESTINGPLATFORM_HOTRELOAD_ENABLED=1 dotnet run --project <project-path>
+```
+
+#### Windows (PowerShell)
+
+```powershell
+$env:TESTINGPLATFORM_HOTRELOAD_ENABLED = "1"
 ```
 
 **Option B -- Add it to `launchSettings.json` (recommended for repeatable use):**
@@ -95,7 +105,7 @@ Create or update `Properties/launchSettings.json` in the test project:
 
 Run the test project directly (not through `dotnet test`) to use hot reload in console mode:
 
-```shell
+```bash
 dotnet run --project <project-path>
 ```
 

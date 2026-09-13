@@ -22,6 +22,8 @@ license: MIT
 
 # Code Testing Generation Skill
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 An AI-powered skill that generates comprehensive, workable unit tests for any programming language using a coordinated multi-agent pipeline.
 
 ## When to Use This Skill
@@ -195,6 +197,7 @@ For languages without a dedicated examples file (Rust, Ruby, Swift, Kotlin, C++,
 - Project must have a build/test system configured
 - Testing framework should be installed (or installable)
 - VS Code with GitHub Copilot extension
+- **Platform**: build and test commands run through `bash` on this machine (Linux/Arch) — the pipeline's `dotnet` / `pytest` / `npm` / `go` / `cargo` / `mvn` invocations are cross-platform and need no PowerShell. Use POSIX paths (`/`) in generated commands and in the `.testagent/*.md` state files; `.testagent/` contents are plain markdown, so they are shell-agnostic.
 
 ## Troubleshooting
 

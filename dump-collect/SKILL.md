@@ -6,6 +6,8 @@ license: MIT
 
 # .NET Crash Dump Collection
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 This skill configures and collects crash dumps for modern .NET applications (CoreCLR and NativeAOT) on Linux, macOS, and Windows — including containers.
 
 ## Stop Signals
@@ -28,7 +30,14 @@ Ask or determine:
 
 ### Detecting CoreCLR vs NativeAOT
 
-**From a binary file (Linux/macOS):**
+> **If the app is .NET Framework (`clr.dll`), stop.** This skill covers modern .NET (CoreCLR and NativeAOT) only.
+>
+> **If neither CoreCLR nor NativeAOT is detected, stop.** This skill only applies to .NET applications — do not proceed.
+
+#### From a binary file — Linux (bash)
+
+*(the same `strings`/`nm` checks work on macOS)*
+
 ```bash
 # CoreCLR — has IL metadata / managed entry point
 strings <binary> | grep -q "CorExeMain" && echo "CoreCLR"
@@ -40,7 +49,10 @@ strings <binary> | grep -q "Rhp" && echo "NativeAOT"
 nm <binary> 2>/dev/null | grep -qi "Rhp" && echo "NativeAOT"
 ```
 
-**From a binary file (Windows):**
+#### From a binary file — Windows (PowerShell)
+
+*(`dumpbin` ships with Visual Studio / the MSVC build tools and is Windows-only; on Linux use `strings`/`nm` as shown above, or `readelf -d <binary>` for the ELF dynamic section.)*
+
 ```powershell
 # CoreCLR — has a CLI header (IL entry point)
 dumpbin /clrheader <binary.exe> | Select-String "CLI Header" -Quiet
@@ -49,21 +61,24 @@ dumpbin /clrheader <binary.exe> | Select-String "CLI Header" -Quiet
 dumpbin /symbols <binary.exe> | Select-String "Rhp" -Quiet
 ```
 
-**From a running process (Linux):**
+#### From a running process — Linux (bash)
+
 ```bash
 # Resolve the binary, then use the same file checks
 BINARY=$(readlink /proc/<pid>/exe)
 strings "$BINARY" | grep -q "CorExeMain" && echo "CoreCLR" || echo "NativeAOT"
 ```
 
-**From a running process (macOS):**
+#### From a running process — macOS (bash)
+
 ```bash
 # Resolve the binary path from the running process
 BINARY=$(ps -o comm= -p <pid>)
 strings "$BINARY" | grep -q "CorExeMain" && echo "CoreCLR" || echo "NativeAOT"
 ```
 
-**From a running process (Windows PowerShell):**
+#### From a running process — Windows (PowerShell)
+
 ```powershell
 # CoreCLR — loads coreclr.dll
 (Get-Process -Id <pid>).Modules.ModuleName -contains "coreclr.dll"
@@ -71,10 +86,6 @@ strings "$BINARY" | grep -q "CorExeMain" && echo "CoreCLR" || echo "NativeAOT"
 # .NET Framework — loads clr.dll (this skill does not apply)
 (Get-Process -Id <pid>).Modules.ModuleName -contains "clr.dll"
 ```
-
-> **If the app is .NET Framework (`clr.dll`), stop.** This skill covers modern .NET (CoreCLR and NativeAOT) only.
->
-> **If neither CoreCLR nor NativeAOT is detected, stop.** This skill only applies to .NET applications — do not proceed.
 
 ## Step 2 — Load the Appropriate Reference
 

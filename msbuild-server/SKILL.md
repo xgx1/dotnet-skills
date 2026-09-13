@@ -6,6 +6,8 @@ license: MIT
 
 # MSBuild Server for CLI Caching
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Use the MSBuild Server to cache evaluation results across CLI builds, matching the performance advantage Visual Studio gets from its long-lived MSBuild process.
 
 ## When to Use
@@ -34,14 +36,26 @@ Verify the developer is building from the command line (`dotnet build`), not fro
 
 ### Step 2: Set the environment variable
 
+#### Linux (bash)
+
 ```bash
-# Bash / CI
+# Bash / CI (current shell)
 export MSBUILDUSESERVER=1
 
-# PowerShell
+# For a single command only, without changing shell state
+MSBUILDUSESERVER=1 dotnet build
+
+# Persistent: append to the shell rc file (~/.bashrc on Arch's default bash, ~/.zshrc if you use zsh)
+echo 'export MSBUILDUSESERVER=1' >> ~/.bashrc
+```
+
+#### Windows (PowerShell)
+
+```powershell
+# PowerShell (current session)
 $env:MSBUILDUSESERVER = "1"
 
-# Windows (persistent)
+# Windows (persistent, applies to newly started shells)
 setx MSBUILDUSESERVER 1
 ```
 

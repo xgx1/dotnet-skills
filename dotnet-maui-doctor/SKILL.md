@@ -14,6 +14,8 @@ license: MIT
 
 # .NET MAUI Doctor
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Validate and fix .NET MAUI development environments. All version requirements are discovered dynamically from NuGet APIs — never hardcode versions.
 
 ## When to Use
@@ -41,8 +43,8 @@ Your training data may be outdated regarding .NET versions. .NET ships new major
 - Shell access (Bash on macOS/Linux, PowerShell on Windows)
 - Internet access for NuGet API queries and SDK downloads
 - Admin/sudo access may be required for installing SDKs and workloads
-- **Bash prerequisites**: `curl`, `jq`, and `unzip` (macOS/Linux)
-- **PowerShell prerequisites**: `Invoke-RestMethod` and `System.IO.Compression` (built-in on Windows)
+- **Linux (bash) prerequisites**: `curl`, `jq`, and `unzip` (this machine — the same bash path applies to macOS)
+- **Windows (PowerShell) prerequisites**: `Invoke-RestMethod` and `System.IO.Compression` (built-in on Windows)
 
 ## Behavior
 
@@ -55,16 +57,25 @@ Your training data may be outdated regarding .NET versions. .NET ships new major
 
 ### Task 1: Detect Environment
 
+#### Linux (bash)
+
 ```bash
-# macOS
-sw_vers && uname -m
-
-# Windows
-systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
-
-# Linux
 cat /etc/os-release && uname -m
 ```
+
+#### macOS (bash)
+
+```bash
+sw_vers && uname -m
+```
+
+#### Windows (PowerShell)
+
+```powershell
+systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
+```
+
+#### After detection (all platforms)
 
 After detection, load the matching platform references:
 - **macOS**: `references/platform-requirements-macos.md`, `references/installation-commands-macos.md`, `references/troubleshooting-macos.md`
@@ -117,6 +128,12 @@ Check packages from `androidsdk.packages`, `buildToolsVersion`, `apiLevel` (Task
 
 ### Task 7: Validate Xcode (macOS Only)
 
+#### Linux (bash)
+
+No Linux equivalent: Xcode and the Apple toolchains exist only on macOS — `xcodebuild` is not present on Linux, Apple targets cannot be built here, and there is nothing to validate. Skip this task.
+
+#### macOS (bash)
+
 ```bash
 xcodebuild -version
 ```
@@ -124,6 +141,12 @@ xcodebuild -version
 Compare against `xcode.version` range from Task 4. See `references/installation-commands-macos.md`.
 
 ### Task 8: Validate Windows SDK (Windows Only)
+
+#### Linux (bash)
+
+No Linux equivalent: the Windows SDK and the `net*-windows` target frameworks do not exist on Linux, so there is nothing to detect. Alternative: build Windows targets on a Windows machine or a Windows CI runner — on Linux only `maui-android` is available.
+
+#### Windows (PowerShell)
 
 The Windows SDK is typically installed as part of the .NET MAUI workload or Visual Studio. See `references/installation-commands-windows.md`.
 
@@ -134,7 +157,7 @@ See `references/installation-commands.md` for all commands.
 Key rules:
 - **Workloads**: Always use `--version` flag. Never use `workload update` or `workload repair`.
 - **JDK**: Only install Microsoft OpenJDK. Do not set JAVA_HOME (auto-detected).
-- **Android SDK**: Use `sdkmanager` (from Android SDK command-line tools). On Windows use `sdkmanager.bat`.
+- **Android SDK**: Use `sdkmanager` (from the Android SDK command-line tools) on Linux. On Windows (PowerShell) use `sdkmanager.bat` instead.
 
 ### Task 10: Re-validate
 
@@ -154,6 +177,8 @@ A successful run produces:
 
 After all checks pass, create and build a test project to confirm the environment actually works:
 
+#### Linux (bash)
+
 ```bash
 TEMP_DIR=$(mktemp -d)
 dotnet new maui -o "$TEMP_DIR/MauiTest"
@@ -161,7 +186,18 @@ dotnet build "$TEMP_DIR/MauiTest"
 rm -rf "$TEMP_DIR"
 ```
 
-On Windows, use `$env:TEMP` or `New-TemporaryFile` for the temp directory.
+#### Windows (PowerShell)
+
+*(`$env:TEMP` + a GUID is the Windows stand-in for `mktemp -d`; `New-TemporaryFile` is the alternative when you want a temp file name.)*
+
+```powershell
+$tempDir = Join-Path $env:TEMP "MauiTest-$([guid]::NewGuid())"
+dotnet new maui -o "$tempDir/MauiTest"
+dotnet build "$tempDir/MauiTest"
+Remove-Item -Recurse -Force $tempDir
+```
+
+#### Result (all platforms)
 
 If the build succeeds, the environment is verified. If it fails, use the error output to diagnose remaining issues.
 
@@ -169,13 +205,29 @@ If the build succeeds, the environment is verified. If it fails, use the error o
 
 After a successful build, **ask the user** if they want to launch the app on a target platform to verify end-to-end:
 
+#### Linux (bash)
+
 ```bash
 # Replace net10.0 with the current major .NET version
 dotnet build -t:Run -f net10.0-android
-dotnet build -t:Run -f net10.0-ios        # macOS only
-dotnet build -t:Run -f net10.0-maccatalyst # macOS only
+```
+
+#### macOS (bash)
+
+```bash
+dotnet build -t:Run -f net10.0-ios
+dotnet build -t:Run -f net10.0-maccatalyst
+```
+
+#### Windows (PowerShell)
+
+```powershell
+# Replace net10.0 with the current major .NET version
+dotnet build -t:Run -f net10.0-android
 dotnet build -t:Run -f net10.0-windows    # Windows only
 ```
+
+#### Which targets to run (all platforms)
 
 Only run the target frameworks relevant to the user's platform and intent. This step deploys to an emulator/simulator/device, so confirm with the user before proceeding.
 

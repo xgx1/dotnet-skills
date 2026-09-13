@@ -13,6 +13,8 @@ description: >
 
 # setup-local-sdk
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 ## Purpose
 
 Guide the user through installing a .NET SDK into a project-local `.dotnet/`
@@ -22,7 +24,7 @@ The examples use .NET 11, but this works with any version — prerelease or stab
 The result is a fully isolated SDK that:
 - Does **not** modify the system-wide .NET installation.
 - Is picked up automatically by `dotnet` commands from the project root.
-- Can be deleted to revert (`rm -rf .dotnet/` or `Remove-Item -Recurse -Force .\.dotnet`).
+- Can be deleted to revert — Linux (bash): `rm -rf .dotnet/`; Windows (PowerShell): `Remove-Item -Recurse -Force .\.dotnet`.
 
 ## When NOT to use
 
@@ -41,7 +43,7 @@ The result is a fully isolated SDK that:
 ### Prerequisites
 
 1. **A .NET 10+ SDK is installed globally** — run `dotnet --version`; major ≥ 10.
-2. **curl** (macOS/Linux) or **PowerShell** (Windows) is available.
+2. **curl** in a bash shell (Linux — the default on this machine; also macOS) or **PowerShell** (Windows) is available.
 
 ## Workflow
 
@@ -74,23 +76,35 @@ If it fails (native Windows without Git Bash) → use PowerShell/`dotnet-install
 
 ### Step 4 — Check for existing local SDK
 
-**macOS / Linux:**
+If `.dotnet/` exists, ask: update with the new version, or skip and keep it?
+
+Run the block for this machine:
+
+#### Linux (bash)
+
+*(also works on macOS)*
 
 ```bash
 test -d .dotnet && echo "exists" || echo "not found"
 ```
 
-**Windows (PowerShell):**
+#### Windows (PowerShell)
 
 ```powershell
 if (Test-Path -LiteralPath .\.dotnet) { "exists" } else { "not found" }
 ```
 
-If `.dotnet/` exists, ask: update with the new version, or skip and keep it?
-
 ### Step 5 — Download and run the install script
 
-**macOS / Linux:**
+For exact versions: use `--version <VERSION>` (bash) or `-Version <VERSION>` (PowerShell)
+instead of channel/quality flags. The install scripts are from Microsoft's official
+URLs: `https://dot.net/v1/dotnet-install.sh` and `https://dot.net/v1/dotnet-install.ps1`.
+
+Run the block for this machine:
+
+#### Linux (bash)
+
+*(also works on macOS)*
 
 ```bash
 INSTALL_SCRIPT="$(mktemp "${TMPDIR:-/tmp}/dotnet-install.XXXXXX")"
@@ -99,7 +113,7 @@ curl -fsSL https://dot.net/v1/dotnet-install.sh -o "$INSTALL_SCRIPT"
 bash "$INSTALL_SCRIPT" --channel <CHANNEL> --quality <QUALITY> --install-dir .dotnet
 ```
 
-**Windows (PowerShell):**
+#### Windows (PowerShell)
 
 ```powershell
 $installScript = Join-Path $env:TEMP "dotnet-install-$([guid]::NewGuid()).ps1"
@@ -114,15 +128,20 @@ finally {
 }
 ```
 
-For exact versions: use `--version <VERSION>` (bash) or `-Version <VERSION>` (PowerShell)
-instead of channel/quality flags. The install scripts are from Microsoft's official
-URLs: `https://dot.net/v1/dotnet-install.sh` and `https://dot.net/v1/dotnet-install.ps1`.
-
 ### Step 6 — Identify the installed version
 
+#### Linux (bash)
+
+*(also works on macOS)*
+
 ```bash
-./.dotnet/dotnet --version          # macOS/Linux
-.\.dotnet\dotnet.exe --version      # Windows
+./.dotnet/dotnet --version
+```
+
+#### Windows (PowerShell)
+
+```powershell
+.\.dotnet\dotnet.exe --version
 ```
 
 Record the exact version string (e.g., `11.0.100-preview.2.26159.112`) for `global.json`.
@@ -157,13 +176,15 @@ isn't lost. Always back up the original file (e.g., `global.json.bak`) before mo
 
 ### Step 8 — Update .gitignore
 
-**macOS / Linux (or Git Bash):**
+#### Linux (bash)
+
+*(also works on macOS or Git Bash)*
 
 ```bash
 grep -qxF '.dotnet/' .gitignore 2>/dev/null || printf '\n.dotnet/\n' >> .gitignore
 ```
 
-**Windows (PowerShell):**
+#### Windows (PowerShell)
 
 ```powershell
 if (-not (Test-Path .gitignore) -or -not (Select-String -Path .gitignore -Pattern '^\.dotnet/$' -Quiet)) {
@@ -177,16 +198,6 @@ Only do this after `global.json` and `.gitignore` are complete, so a slow or
 platform-limited workload install does not prevent the base local SDK setup from
 being usable.
 
-If the user mentioned MAUI, mobile, workload, Blazor WASM, or cross-platform,
-install using the **local** binary (no sudo needed):
-
-```bash
-./.dotnet/dotnet workload install <workload>       # macOS/Linux
-.\.dotnet\dotnet.exe workload install <workload>   # Windows
-```
-
-Verify: `./.dotnet/dotnet workload list` (or `.\.dotnet\dotnet.exe workload list`).
-
 For MAUI, pick a workload supported by the current OS and target platform. On
 Linux, the full `maui` meta-workload is not available; use a supported workload
 such as `maui-android` when Android is the target, or explain the platform
@@ -195,6 +206,27 @@ limitation and ask which target to configure.
 > **Always use the local dotnet binary for workload commands.** Workload metadata
 > is stored relative to the host process's dotnet root. The system `dotnet` puts
 > metadata in the wrong location. (See [dotnet/sdk#49825](https://github.com/dotnet/sdk/issues/49825).)
+
+If the user mentioned MAUI, mobile, workload, Blazor WASM, or cross-platform,
+install using the **local** binary (no sudo needed) — run the block for this machine:
+
+#### Linux (bash)
+
+*(also works on macOS)*
+
+```bash
+./.dotnet/dotnet workload install <workload>
+```
+
+#### Windows (PowerShell)
+
+```powershell
+.\.dotnet\dotnet.exe workload install <workload>
+```
+
+#### Verify (both platforms)
+
+`./.dotnet/dotnet workload list` (Linux) or `.\.dotnet\dotnet.exe workload list` (Windows).
 
 ### Step 10 — Create team install scripts
 
@@ -210,6 +242,8 @@ scripts, reuse that version in the scripts and update `global.json` first; do
 not start a long SDK download just to discover the version. When the user asks
 for both setup and scripts, create the scripts/config before any long install so
 the reproducible setup exists even if download or workload installation is slow.
+
+#### Linux (bash)
 
 **install-dotnet.sh:**
 
@@ -296,6 +330,8 @@ echo "Done. SDK: $SDK_VERSION"
 chmod +x install-dotnet.sh
 ```
 
+#### Windows (PowerShell)
+
 **install-dotnet.ps1:**
 
 ```powershell
@@ -353,6 +389,8 @@ if (-not (Test-Path .gitignore) -or -not (Select-String -Path .gitignore -Patter
 if ($Workloads.Count -gt 0) { & "$installDir\dotnet.exe" workload install @Workloads }
 Write-Host "Done. SDK: $sdkVersion"
 ```
+
+#### Commit the scripts (all platforms)
 
 Commit these scripts to the repo so teammates can run them.
 

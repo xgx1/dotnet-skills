@@ -6,6 +6,8 @@ license: MIT
 
 # Android Tombstone .NET Symbolication
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Resolves native backtrace frames from .NET Android app crashes (MAUI, Xamarin, Mono) to function names, source files, and line numbers using ELF BuildIds and Microsoft's symbol server.
 
 **Inputs:** Tombstone file or logcat crash output, `llvm-symbolizer` (from Android NDK or any LLVM 14+ toolchain), internet access for symbol downloads.
@@ -92,7 +94,30 @@ For unresolved frames (`??`), keep the original line with BuildId and PC offset.
 
 ### Automation Script
 
-[scripts/Symbolicate-Tombstone.ps1](scripts/Symbolicate-Tombstone.ps1) automates the full workflow:
+[scripts/Symbolicate-Tombstone.ps1](scripts/Symbolicate-Tombstone.ps1) automates the full workflow (parse → BuildId/URL report → symbol download → symbolication). The script is PowerShell, so it needs `pwsh`; the manual steps 1–4 above are the equivalent and run with no PowerShell at all.
+
+#### Linux (bash)
+
+`pwsh` is **not installed** on this machine (`pwsh` → not found), and `llvm-symbolizer` is not on `PATH` either, so drive the workflow with the manual commands:
+
+```bash
+# Step 1: list frame lines (frame, PC offset, library, BuildId) from a raw tombstone
+grep -nE '#[0-9]+ +pc +[0-9a-f]+' tombstone_01.txt | head -n 40
+
+# Step 3: download symbols for one BuildId (repeat per unique BuildId)
+curl -sL "https://msdl.microsoft.com/download/symbols/_.debug/elf-buildid-sym-<BUILDID>/_.debug" \
+  -o libmonosgen-2.0.so.debug
+file libmonosgen-2.0.so.debug
+
+# Step 4: symbolicate — tombstone PC offsets are already library-relative
+llvm-symbolizer --obj=libmonosgen-2.0.so.debug -f -C 0x222098
+```
+
+Install the symbolizer with `sudo pacman -S llvm` (Arch `extra`; this machine has only `llvm-libs` today), or use the Android NDK copy from [Finding llvm-symbolizer](#finding-llvm-symbolizer).
+
+If you install PowerShell 7+ (`pwsh`) on Linux, the script itself is portable by inspection — it uses only cross-platform cmdlets (`Get-ChildItem`, `Test-Path`, `Join-Path`, `New-Item`, `Remove-Item`, `Write-Host`, `Get-Content`) and invokes `llvm-symbolizer`/`llvm-readelf` as external processes. 待验证 (unverified): that script has not been executed on Linux here, and its `-ParseOnly`/version-lookup paths depend on `llvm-readelf` being present.
+
+#### Windows (PowerShell)
 
 ```powershell
 pwsh scripts/Symbolicate-Tombstone.ps1 -TombstoneFile tombstone_01.txt -LlvmSymbolizer llvm-symbolizer
@@ -105,6 +130,14 @@ Flags: `-CrashingThreadOnly` (limit to crashing thread), `-OutputFile path` (wri
 ## Finding llvm-symbolizer
 
 Check the **Android NDK** first: `$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/*/bin/llvm-symbolizer` or `$ANDROID_HOME/ndk/*/toolchains/llvm/prebuilt/*/bin/llvm-symbolizer`. Also available via `brew install llvm`, `apt install llvm`, or `xcrun --find llvm-symbolizer` on macOS.
+
+On this machine (Arch Linux), install it with:
+
+```bash
+# llvm is in the `extra` repo; only llvm-libs is installed here today
+sudo pacman -S llvm
+llvm-symbolizer --version   # also provides llvm-readelf, needed by version lookup
+```
 
 If unavailable, complete steps 1–3 and present the download commands and `llvm-symbolizer` commands for the user to run. Do not spend time installing LLVM.
 

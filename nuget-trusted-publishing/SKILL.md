@@ -11,6 +11,8 @@ license: MIT
 
 # NuGet Trusted Publishing Setup
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Set up [NuGet trusted publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing) on a GitHub Actions repo. Replaces long-lived API keys with OIDC-based short-lived tokens — no secrets to rotate or leak.
 
 ## Prerequisites
@@ -77,6 +79,40 @@ Pack and verify locally before touching nuget.org — publishing errors waste a 
 1. `dotnet pack -c Release -o ./artifacts` — verify `.nupkg` is created
 2. For tools/MCP servers: install from `./artifacts`, run `--help`, uninstall
 3. For libraries: inspect the `.nupkg` contents (it's a zip)
+
+#### Linux (bash)
+
+The `dotnet` commands are identical on every platform; only the shell syntax around them differs.
+
+```bash
+dotnet pack -c Release -o ./artifacts
+ls ./artifacts/*.nupkg
+
+# Tool / MCP server: install from the local artifacts folder, smoke-test, uninstall
+dotnet tool install --global --add-source ./artifacts <ToolCommandName>
+<ToolCommandName> --help
+dotnet tool uninstall --global <ToolCommandName>
+
+# Library: list the package contents without extracting
+unzip -l ./artifacts/*.nupkg
+```
+
+#### Windows (PowerShell)
+
+```powershell
+dotnet pack -c Release -o ./artifacts
+Get-ChildItem ./artifacts/*.nupkg
+
+dotnet tool install --global --add-source ./artifacts <ToolCommandName>
+<ToolCommandName> --help
+dotnet tool uninstall --global <ToolCommandName>
+
+# Library: list package contents. Expand-Archive only accepts .zip, so read the
+# zip directly instead of renaming the .nupkg.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$pkg = Get-ChildItem ./artifacts/*.nupkg | Select-Object -First 1
+[System.IO.Compression.ZipFile]::OpenRead($pkg.FullName).Entries.FullName
+```
 
 ### Phase 3: nuget.org Policy
 

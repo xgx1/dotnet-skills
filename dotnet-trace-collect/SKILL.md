@@ -6,7 +6,69 @@ license: MIT
 
 # .NET Trace Collect
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 This skill helps developers diagnose production performance issues by recommending the right diagnostic tools for their environment, guiding data collection, and suggesting analysis approaches. It does not analyze code for anti-patterns or perform the analysis itself.
+
+## Platform Support (what runs where)
+
+Three classes of tooling appear in this document:
+
+| Class | Tools | Runs on this machine (Arch Linux) |
+|-------|-------|-----------------------------------|
+| Cross-platform .NET global tools | `dotnet-trace`, `dotnet-dump`, `dotnet-gcdump`, `dotnet-counters`, `dotnet-monitor`, `dotnet-symbol` | Yes — `dotnet tool install -g <name>` |
+| Linux-only tooling | `dotnet-trace collect-linux` (.NET 10+), `perfcollect`, `lldb` + SOS | Yes (root for `collect-linux` / `perfcollect`) |
+| Windows-only tooling | PerfView, `procdump` (Sysinternals), Task Manager, Fusion Log Viewer (`fuslogvw.exe`), WinDbg, Visual Studio | No |
+
+Additional platform facts that change the tool choice:
+
+- **.NET Framework does not run on Linux at all.** Every `.NET Framework` path in this document is Windows-only by definition; on Linux only modern .NET (.NET Core 3.0+) applies.
+- **PerfView is Windows-only.** No Linux equivalent: it consumes ETW, which Windows provides. Alternative on Linux: `dotnet-trace` (managed stacks) or `dotnet-trace collect-linux` / `perfcollect` (native stacks + kernel events).
+- **`procdump` and Task Manager dumps are Windows-only.** On Linux use the `dump-collect` skill (`dotnet-dump collect -p <PID>`, or `createdump` for NativeAOT).
+
+### Linux (bash)
+
+```bash
+# Install the cross-platform tools (once per machine)
+dotnet tool install -g dotnet-trace
+dotnet tool install -g dotnet-dump     # dumps — prefer the `dump-collect` skill
+
+# PID discovery (required before any -p <PID> command)
+dotnet-trace ps
+ps -eo pid,comm,args | grep -i <AppName>
+
+# Managed trace — thread-time is captured by default; no admin needed
+dotnet-trace collect -p <PID>
+
+# GC events
+dotnet-trace collect -p <PID> --profile gc-verbose
+
+# .NET 10+ with root: richer trace incl. native call stacks and kernel events
+dotnet-trace collect-linux --profile thread-time
+
+# Assembly loader / binder events (attach, or launch short-lived processes)
+dotnet-trace collect --clrevents assemblyloader -p <PID>
+dotnet-trace collect --clrevents assemblyloader -- <path-to-built-exe>
+```
+
+### Windows (PowerShell)
+
+```powershell
+# PerfView (requires admin for ETW; download from https://github.com/microsoft/perfview)
+PerfView collect
+PerfView /ThreadTime collect /BufferSizeMB:1024 /CircularMB:2048
+PerfView collect /GCCollectOnly
+PerfView /ThreadTime collect /BufferSizeMB:1024 /CircularMB:2048 /Providers:*System.Net.Http,*System.Net.NameResolution,*System.Net.Security,*System.Net.Sockets
+
+# dotnet-trace runs on Windows too and needs no admin
+dotnet-trace collect -p <PID>
+dotnet-trace collect -p <PID> --profile gc-verbose
+
+# .NET Framework process dumps without admin (Sysinternals procdump)
+procdump -ma <PID>
+```
+
+The per-symptom sections below name the platform for each recommendation; the command forms they quote are collected here.
 
 ## When to Use
 
@@ -205,7 +267,7 @@ Explain the trade-offs when recommending a tool. For example:
 
 ### Step 3: Guide data collection
 
-Provide the specific commands for the recommended tool. Load the appropriate reference file from the [tool reference lookup](#tool-reference-lookup) table for detailed command-line examples.
+Provide the specific commands for the recommended tool. Load the appropriate reference file from the [tool reference lookup](#tool-reference-lookup) table for detailed command-line examples. On **this machine (Arch Linux)**, the runnable `bash` forms of every command named below are collected in [Platform Support](#platform-support-what-runs-where) — use those by default, and treat the PerfView / `procdump` / Task Manager paths as the `Windows (PowerShell)` variant.
 
 Key guidance to include:
 

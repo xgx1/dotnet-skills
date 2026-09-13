@@ -6,6 +6,8 @@ license: MIT
 
 # Build Performance Baseline & Optimization
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 ## Overview
 
 Before optimizing a build, you need a **baseline**. Without measurements, optimization is guesswork. This skill covers how to establish baselines and apply systematic optimization techniques.
@@ -26,16 +28,29 @@ Measure three scenarios to understand where time is spent:
 
 No previous build output exists. Measures the full end-to-end time including restore, compilation, and all targets.
 
+#### Linux (bash)
+
 ```bash
 # Clean everything first
 dotnet clean
 # Remove bin/obj to truly start fresh
-Get-ChildItem -Recurse -Directory -Include bin,obj | Remove-Item -Recurse -Force
-# OR on Linux/macOS:
-# find . -type d \( -name bin -o -name obj \) -exec rm -rf {} +
+find . -type d \( -name bin -o -name obj \) -exec rm -rf {} +
 
 # Measure cold build
 dotnet build /bl:cold-build.binlog -m
+```
+
+#### Windows (PowerShell)
+
+```powershell
+# Clean everything first
+dotnet clean
+# Remove bin/obj to truly start fresh
+Get-ChildItem -Recurse -Directory -Include bin,obj | Remove-Item -Recurse -Force
+
+# Measure cold build
+dotnet build /bl:cold-build.binlog -m
+# NOTE: with the MSBuild 17.8+ `{}` placeholder, PowerShell needs -bl:{{}} (see binlog-generation)
 ```
 
 ### Warm Build (Incremental Build)
@@ -319,6 +334,8 @@ error MSB4260: Project reference "..." could not be resolved with static graph.
 
 ### MaxCpuCount
 
+#### Linux (bash)
+
 ```bash
 # Use all available cores (default in dotnet build)
 dotnet build -m
@@ -326,6 +343,13 @@ dotnet build -m
 # Specify explicit core count (useful for CI with shared agents)
 dotnet build -m:4
 
+# MSBuild entry point via the .NET CLI (cross-platform, no MSBuild.exe needed)
+dotnet msbuild /m:8 MySolution.sln
+```
+
+#### Windows (PowerShell)
+
+```powershell
 # MSBuild.exe syntax
 msbuild /m:8 MySolution.sln
 ```

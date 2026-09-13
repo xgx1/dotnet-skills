@@ -6,6 +6,10 @@ license: MIT
 
 # Apple Platform Crash Log .NET Symbolication
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+>
+> **This skill has no Windows variant at all**: Apple's `atos` and `dwarfdump` ship only with Xcode (macOS), so the second platform here is **macOS**. The Linux path uses `llvm-symbolizer`/`llvm-dwarfdump` plus the same Microsoft symbol server, and is marked `待验证 (unverified)` where it cannot be executed on this machine.
+
 Resolves native backtrace frames from .NET MAUI and Mono app crashes on Apple platforms (iOS, tvOS, Mac Catalyst, macOS) to function names, source files, and line numbers using Mach-O UUIDs and dSYM debug symbol bundles.
 
 **Inputs:** Crash log file (`.ips` JSON format, iOS 15+ / macOS 12+), `atos` (from Xcode), optionally a connected iOS device to pull crash logs from.
@@ -84,9 +88,39 @@ For each .NET library needing symbolication, locate a UUID-matched dSYM:
 4. **NuGet cache**: `~/.nuget/packages/microsoft.netcore.app.runtime.<rid>/<version>/runtimes/<rid>/native/`
 5. **`dotnet-symbol`**: `dotnet-symbol --symbols -o symbols-out <path-to-binary.dylib>`
 
-Always verify: `dwarfdump --uuid <dsym>` must match the UUID from the crash log exactly.
+Always verify the symbol UUID matches the crash log UUID exactly:
+
+#### Linux (bash)
+
+```bash
+# llvm-dwarfdump is the LLVM equivalent of Apple's dwarfdump and reads the same Mach-O dSYM
+llvm-dwarfdump --uuid libcoreclr.dSYM
+```
+
+`llvm-dwarfdump` is not installed on this machine (install the Arch `llvm` package: `sudo pacman -S llvm`). 待验证 (unverified): it has not been run against a `.dSYM` bundle here — compare the raw UUID hex string, and treat a tool error as "cannot verify" rather than a UUID mismatch.
+
+#### macOS (Xcode tools)
+
+```bash
+dwarfdump --uuid <dsym>
+```
 
 ### Step 5: Symbolicate with atos
+
+#### Linux (bash)
+
+No Linux equivalent for `atos` itself: it ships only with Apple's Xcode Command Line Tools and has no Linux port. The equivalent on this machine is `llvm-symbolizer`, pointed at the same DWARF binary inside the `.dSYM`:
+
+```bash
+# Every .ips frame carries `imageOffset` (already file-relative) next to `base`.
+# llvm-symbolizer wants that file-relative offset — do NOT add the load address.
+# Example: frame address 0x104522098 with usedImages[N].base == 0x104000000 → offset 0x522098
+llvm-symbolizer --obj=libcoreclr.dSYM/Contents/Resources/DWARF/libcoreclr -f -C 0x522098
+```
+
+Pass several offsets in one invocation to batch-symbolicate. 待验证 (unverified): `llvm-symbolizer` reading a Mach-O `.dwarf`/dSYM on Linux has not been tested here (neither `llvm-symbolizer` nor `llvm-dwarfdump` is installed; `sudo pacman -S llvm` provides both). LLVM supports Mach-O object files in principle — if it rejects the file, run the `atos` path on a macOS machine instead.
+
+#### macOS (Xcode tools)
 
 ```bash
 atos -arch arm64 -o <path.dSYM/Contents/Resources/DWARF/binary_name> -l <load_address> <frame_addresses...>
@@ -108,10 +142,34 @@ Strip the `/__w/1/s/` CI workspace prefix from output — meaningful paths start
 
 [scripts/Symbolicate-Crash.ps1](scripts/Symbolicate-Crash.ps1) automates the full workflow (parsing, dSYM lookup, symbol download, and symbolication). Resolve the path relative to this SKILL.md file.
 
+#### Linux (bash)
+
+`pwsh` is **not installed** on this machine (`pwsh` → not found), so run the downloaded-symbol path manually — this is also the only path that works without `atos`:
+
+```bash
+# Step 4.1: download the .dwarf for a UUID taken from the crash log
+# (symbol server wants it lowercase and without dashes)
+UUID=00000000-0000-0000-0000-000000000000
+curl -sL "https://msdl.microsoft.com/download/symbols/_.dwarf/mach-uuid-sym-${UUID//-/}/_.dwarf" -o _.dwarf
+
+# Wrap it in the .dSYM bundle layout that both llvm-symbolizer and atos expect
+mkdir -p libcoreclr.dSYM/Contents/Resources/DWARF
+cp _.dwarf libcoreclr.dSYM/Contents/Resources/DWARF/libcoreclr
+
+# Step 5 (Linux): symbolicate by imageOffset from the .ips frame
+llvm-symbolizer --obj=libcoreclr.dSYM/Contents/Resources/DWARF/libcoreclr -f -C 0x522098
+```
+
+If `pwsh` is installed, the script can run on Linux for the parsing, dSYM-lookup, and symbol-download stages, but its symbolication stage calls `atos`, which does not exist on Linux. 待验证 (unverified): the script has not been executed on Linux here.
+
+#### Windows (PowerShell)
+
 ```powershell
 # $SKILL_DIR is the directory containing this SKILL.md
 pwsh "$SKILL_DIR/scripts/Symbolicate-Crash.ps1" -CrashFile MyApp-2026-02-25.ips
 ```
+
+On macOS this is the full workflow; on Windows only the parse / dSYM-lookup / symbol-download stages can succeed, because `atos` ships only with Xcode.
 
 Start with `-ParseOnly` for a fast overview without requiring `atos`. The script automatically downloads symbols from the Microsoft symbol server when local dSYMs are missing.
 
@@ -121,6 +179,8 @@ Flags: `-CrashingThreadOnly`, `-OutputFile path`, `-ParseOnly`, `-SkipVersionLoo
 
 ## Retrieving Crash Logs
 
+### Linux (bash)
+
 Pull crash logs from a connected iOS device using `idevicecrashreport` (from [libimobiledevice](https://libimobiledevice.org/)):
 
 ```bash
@@ -128,7 +188,11 @@ idevicecrashreport -e /tmp/crashlogs/
 find /tmp/crashlogs/ -iname '*MyApp*' -name '*.ips'
 ```
 
-Also available in **Xcode > Window > Devices and Simulators > View Device Logs**, or at `~/Library/Logs/CrashReporter/` (Mac Catalyst), `~/Library/Logs/DiagnosticReports/` (macOS).
+This is already installed on this machine (`/usr/bin/idevicecrashreport`), and it is the Linux retrieval path for `.ips` files.
+
+### macOS (Xcode)
+
+Also available in **Xcode > Window > Devices and Simulators > View Device Logs**, or at `~/Library/Logs/CrashReporter/` (Mac Catalyst), `~/Library/Logs/DiagnosticReports/` (macOS). These `~/Library/...` locations and the Xcode device-log viewer exist only on macOS.
 
 ---
 

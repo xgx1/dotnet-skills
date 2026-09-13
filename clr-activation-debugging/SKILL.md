@@ -12,6 +12,10 @@ license: MIT
 
 # CLR Activation Debugging
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+>
+> **This skill is Windows-only.** .NET Framework CLR activation (the `mscoree.dll` shim, Feature-on-Demand, the `HKLM\SOFTWARE\Microsoft\.NETFramework` registry keys) does not exist on Linux, so there is nothing to diagnose on this machine. See the Linux section under [Prerequisites](#prerequisites) for what to use instead.
+
 Diagnose .NET Framework runtime activation issues by analyzing CLR activation logs (CLRLoad logs) produced by the shim (mscoree.dll). These logs record every decision the shim makes when selecting and loading a CLR version.
 
 ## When to Use
@@ -29,6 +33,7 @@ Diagnose .NET Framework runtime activation issues by analyzing CLR activation lo
 - **Modern .NET (CoreCLR / .NET 5+)** — this skill covers .NET Framework only (the mscoree.dll shim)
 - **Assembly binding failures** — use Fusion logs (fuslogvw.exe), not CLR activation logs
 - **Runtime crashes after the CLR has loaded** — activation succeeded; the problem is elsewhere
+- **Linux and macOS** — .NET Framework does not exist on these platforms, so neither does the shim and neither do its activation logs; use modern .NET host tracing instead (see Prerequisites). Mono is a different runtime and does not use `mscoree.dll` either
 
 ## Background
 
@@ -67,18 +72,44 @@ If a user reports one of these HRESULTs (especially `0x80131700`), CLR activatio
 
 CLR activation logging must be enabled to produce log files. If the user doesn't have logs yet, instruct them to enable logging:
 
-**Via environment variable (recommended — scoped to current session):**
+### Linux (bash)
+
+No Linux equivalent: the CLR activation log is written by the Windows-only shim (`mscoree.dll` / `mscoreei.dll`), which does not exist on Linux — there is no `CLRLoadLogDir` to set and no `.CLRLoad*.log` files are ever produced, so there is nothing to enable or diagnose on this machine.
+
+Alternative for modern .NET on Linux: .NET (CoreCLR / .NET 5+) has no shim and therefore no activation log. Runtime and host resolution is traced with host tracing instead:
+
+```bash
+COREHOST_TRACE=1 COREHOST_TRACEFILE=host_trace.txt ./MyApp
 ```
-set COMPLUS_CLRLoadLogDir=C:\CLRLoadLogs
+
+`dotnet --info` shows the resolved host and SDK, and `global.json` (`rollForward`) / `DOTNET_ROLL_FORWARD` is the modern analogue of the shim's version-selection policy.
+
+### Windows (PowerShell)
+
+**Via environment variable (recommended — scoped to current session):**
+
+```powershell
+$env:COMPLUS_CLRLoadLogDir = 'C:\CLRLoadLogs'   # cmd.exe equivalent: set COMPLUS_CLRLoadLogDir=C:\CLRLoadLogs
 ```
 
 **Via registry (machine-wide — affects all .NET Framework processes):**
+
 ```
 HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\.NETFramework
   CLRLoadLogDir = "C:\CLRLoadLogs" (REG_SZ)
 ```
 
-On 64-bit systems, also set under `Wow6432Node` if 32-bit processes are involved.
+```powershell
+New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\.NETFramework' `
+    -Name 'CLRLoadLogDir' -PropertyType String -Value 'C:\CLRLoadLogs' -Force
+```
+
+On 64-bit systems, also set under `Wow6432Node` if 32-bit processes are involved:
+
+```powershell
+New-ItemProperty -Path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework' `
+    -Name 'CLRLoadLogDir' -PropertyType String -Value 'C:\CLRLoadLogs' -Force
+```
 
 > ⚠️ **The log directory must already exist.** The shim will not create it. If it doesn't exist, no logs will be written and there will be no error or indication of failure.
 
@@ -122,6 +153,8 @@ Get the big picture before diving into any single log:
 grep -l "ERROR:\|Launching feature-on-demand\|Could have launched" *.log
 grep -c "Launching feature-on-demand" *.log
 ```
+
+> **Platform**: this `grep` snippet is the Linux (bash) form and runs as-is here. On Windows, run it from Git Bash or WSL — the `.CLRLoad*.log` files themselves are produced on Windows only.
 
 3. **Build a summary table:**
 
@@ -205,6 +238,12 @@ This happens when a native EXE (like link.exe or mt.exe) loads the CLR successfu
 ### Step 4: Check System State (if needed)
 
 When log analysis points to a registration or configuration issue, check:
+
+#### Linux (bash)
+
+No Linux equivalent: every check below reads Windows-only state — the COM registration under `HKCR\CLSID\{guid}\InprocServer32`, the installed-runtime policy keys under `HKLM\SOFTWARE\Microsoft\.NETFramework\policy`, and the process error mode (`SEM_FAILCRITICALERRORS`). None of these exist on Linux, and there is no Feature-on-Demand. Alternative: for modern .NET host/runtime resolution on Linux, trace with `COREHOST_TRACE=1` (see Prerequisites) and inspect `global.json` / `DOTNET_ROLL_FORWARD`.
+
+#### Windows (PowerShell)
 
 **CLSID Registration** (for COM activation issues):
 ```powershell

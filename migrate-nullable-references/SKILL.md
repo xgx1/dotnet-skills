@@ -14,6 +14,8 @@ license: MIT
 
 # Nullable Reference Migration
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Enable C# nullable reference types (NRTs) in an existing codebase and systematically resolve all warnings. The outcome is a project (or solution) with `<Nullable>enable</Nullable>`, zero nullable warnings, and accurately annotated public API surfaces — giving both the compiler and consumers reliable nullability information.
 
 ## When to Use
@@ -47,7 +49,7 @@ Enable C# nullable reference types (NRTs) in an existing codebase and systematic
 
 ### Step 1: Evaluate readiness
 
-> **Optional:** Run `scripts/Get-NullableReadiness.ps1 -Path <project-or-solution>` to automate the checks below. The script reports `<Nullable>`, `<LangVersion>`, `<TargetFramework>`, `<WarningsAsErrors>` settings and counts `#nullable disable` directives, `!` operators, and `#pragma warning disable CS86xx` suppressions. Use `-Json` for machine-readable output.
+> **Optional:** the checks in this step can be automated — use the platform block at the end of this step (Linux is the default here).
 
 1. Identify how the project is built and tested. Look for build scripts (e.g., `build.cmd`, `build.sh`, `Makefile`), a `.sln` file, or individual `.csproj` files. If the repo uses a custom build script, use it instead of `dotnet build` throughout this workflow.
 2. Run `dotnet --version` to confirm the SDK is installed. Nullable reference types (NRTs) require C# 8.0+ (`.NET Core 3.0` / `.NET Standard 2.1` or later).
@@ -59,6 +61,28 @@ Enable C# nullable reference types (NRTs) in an existing codebase and systematic
    - **Library**: Focus on public API contracts first. Every `?` on a public parameter or return type is a contract change that consumers depend on. Be precise and conservative.
    - **Application (web, console, desktop)**: Focus on null safety at boundaries — deserialization, database queries, user input, external API responses. Internal plumbing can be annotated more liberally.
    - **Test project**: Lower priority for annotation precision. Use `!` more freely on test setup and assertions where null is never expected. Focus on ensuring test code compiles cleanly.
+
+#### Linux (bash)
+
+No Linux equivalent script: this skill ships only `scripts/Get-NullableReadiness.ps1` (PowerShell) and there is no `.sh` twin. Alternative — run the same checks manually with `grep`:
+
+```bash
+# Project-level settings: <Nullable>, <LangVersion>, <TargetFramework(s)>,
+# <WarningsAsErrors>, <TreatWarningsAsErrors> (including repo-wide props files)
+grep -nE '<(Nullable|LangVersion|TargetFrameworks?|WarningsAsErrors|TreatWarningsAsErrors)>' \
+    MyProject.csproj Directory.Build.props 2>/dev/null
+
+# Source-level counts (replace . with your source root)
+grep -rn --include='*.cs' -E '^[[:space:]]*#nullable[[:space:]]+disable'   . | wc -l
+grep -rn --include='*.cs' -E '#pragma[[:space:]]+warning[[:space:]]+disable[[:space:]]+CS86' . | wc -l
+grep -rn --include='*.cs' -oE '![^=]' . | wc -l   # approximate ! operator count
+```
+
+The `!` count is approximate: it does not strip string literals or comments and skips a `!` at end of line — treat it as an order-of-magnitude figure, the same way the PowerShell script labels its own count "approx".
+
+#### Windows (PowerShell)
+
+Run `scripts/Get-NullableReadiness.ps1 -Path <project-or-solution>` to automate the checks above. The script reports `<Nullable>`, `<LangVersion>`, `<TargetFramework>`, `<WarningsAsErrors>` settings and counts `#nullable disable` directives, `!` operators, and `#pragma warning disable CS86xx` suppressions. Use `-Json` for machine-readable output.
 
 ### Step 2: Choose a rollout strategy
 
@@ -93,6 +117,26 @@ Best for large legacy codebases where enabling project-wide would produce an unm
 3. Prioritize files in dependency order: shared utilities and models first, then higher-level consumers.
 
 > **Build checkpoint:** After enabling `<Nullable>` (or adding `#nullable enable` to the first batch of files), do a **clean build** (e.g., `dotnet build --no-incremental`, or delete `bin`/`obj` first). Incremental builds only recompile changed files and will hide warnings in untouched files. Record the initial warning count — this is the baseline to work down from. Do not proceed to fixing warnings without first confirming the project still compiles. Use clean builds for all subsequent build checkpoints in this workflow.
+
+#### Linux (bash)
+
+```bash
+dotnet build --no-incremental
+
+# or force full re-evaluation by deleting build output first
+find . -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
+```
+
+#### Windows (PowerShell)
+
+```powershell
+dotnet build --no-incremental
+
+# or force full re-evaluation by deleting build output first
+Get-ChildItem -Path . -Recurse -Directory |
+    Where-Object { $_.Name -in 'bin', 'obj' } |
+    Remove-Item -Recurse -Force
+```
 
 ### Step 3: Fix dereference warnings
 
@@ -212,12 +256,24 @@ When a simple `?` annotation cannot express the null contract, apply attributes 
 
 ### Step 6: Clean up suppressions
 
-> **Optional:** Re-run `scripts/Get-NullableReadiness.ps1` to get current counts of `#nullable disable` directives, `!` operators, and `#pragma warning disable CS86xx` suppressions across the project.
+> **Optional:** re-run the readiness checks from Step 1 to get current counts of `#nullable disable` directives, `!` operators, and `#pragma warning disable CS86xx` suppressions across the project — see the platform block at the end of this step.
 
 1. Search for any `#nullable disable` directives or `!` operators that were added as temporary workarounds.
 2. For each one, determine whether the suppression is still needed.
 3. Remove suppressions that are no longer necessary. For any that remain, add a comment explaining why.
 4. Search for `#pragma warning disable CS86` to find suppressed nullable warnings and evaluate whether the underlying issue can be fixed instead.
+
+#### Linux (bash)
+
+```bash
+grep -rn --include='*.cs' -E '^[[:space:]]*#nullable[[:space:]]+disable'  . | wc -l
+grep -rn --include='*.cs' -E '#pragma[[:space:]]+warning[[:space:]]+disable[[:space:]]+CS86' . | wc -l
+grep -rn --include='*.cs' -oE '![^=]' . | wc -l   # approximate ! operator count
+```
+
+#### Windows (PowerShell)
+
+Re-run `scripts/Get-NullableReadiness.ps1` (see Step 1 for the full invocation and options).
 
 > **Build checkpoint:** After removing suppressions, build again — removing a `#nullable disable` or `!` may surface new warnings that need fixing.
 

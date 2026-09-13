@@ -20,6 +20,8 @@ license: MIT
 
 # Test Smell Detection
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Deep formal audit of test code in any supported language using an academic test smell taxonomy. Detects symptoms of bad design or implementation decisions that make tests harder to understand, more fragile, less effective at catching bugs, or more expensive to maintain. Produces a severity-ranked report with specific locations and actionable fixes.
 
 > **Language-specific guidance**: Call the `test-analysis-extensions` skill to discover available extension files, then read the file matching the target codebase. The extension file documents test markers, sleep / time / random APIs, skip annotations, setup/teardown, mystery-guest indicators (file/database/network/env), integration markers, and language-specific calibration notes that drive the smell detectors below.

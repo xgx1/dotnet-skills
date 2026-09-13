@@ -21,7 +21,11 @@ license: MIT
 
 # Test Anti-Pattern Detection
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Quick, pragmatic analysis of test code in any supported language for anti-patterns and quality issues that undermine test reliability, maintainability, and diagnostic value.
+
+> **Language vs. platform**: framework entries in the catalogs below (e.g. Pester/PowerShell, `Write-Host`, `Start-Sleep`, `Should -Invoke`) denote *test source languages and frameworks*, not a Windows requirement. This skill is analysis-only and contains no platform-specific command blocks.
 
 > **Language-specific guidance**: Call the `test-analysis-extensions` skill to discover available extension files, then read the file matching the target codebase (e.g., `extensions/dotnet.md`, `extensions/python.md`, `extensions/typescript.md`, `extensions/go.md`). The extension file tells you which sleep / time / random / skip / setup-teardown / mystery-guest APIs to look for in that language.
 

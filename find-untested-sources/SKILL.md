@@ -19,6 +19,8 @@ disable-model-invocation: true
 
 # Find Untested Sources
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 ## Purpose
 
 Coverage tools answer "which lines were executed?" — they require a green build
@@ -73,6 +75,24 @@ pairing beats the polyglot engine's identifier overlap.
 
 ### Usage
 
+#### Linux (bash)
+
+```bash
+# From the skill folder (substitute the <...> placeholders; they are quoted so bash parses them as arguments)
+dotnet run scripts/Find-UntestedSources.cs -- "<repo-root>" [--top N]
+
+# Save the report
+dotnet run scripts/Find-UntestedSources.cs -- "<repo-root>" > pairing.json
+
+# Iterate the untested list, highest-API-surface first (`jq` is installed here at /usr/bin/jq)
+jq -r '.untested[:10][] | [.source, .decl_count, .suggested_test_path] | @tsv' pairing.json
+
+# No jq? Same rows with python3:
+python3 -c 'import json; [print(u["source"], u["decl_count"], u["suggested_test_path"]) for u in json.load(open("pairing.json"))["untested"][:10]]'
+```
+
+#### Windows (PowerShell)
+
 ```powershell
 # From the skill folder
 dotnet run scripts/Find-UntestedSources.cs -- <repo-root> [--top N]
@@ -84,6 +104,8 @@ dotnet run scripts/Find-UntestedSources.cs -- <repo-root> > pairing.json
 $report = Get-Content pairing.json | ConvertFrom-Json
 $report.untested | Select-Object -First 10 source, decl_count, suggested_test_path
 ```
+
+`dotnet run <file>.cs` (file-based apps, .NET 10+) is cross-platform, so the analyzer invocation itself is identical in both shells — only the report-iteration line differs.
 
 Diagnostics go to stderr; JSON goes to stdout.
 
@@ -151,8 +173,39 @@ Diagnostics go to stderr; JSON goes to stdout.
 - `pip install tree-sitter-language-pack` (single self-contained wheel that
   bundles parsers for 300+ languages and the high-level `process()` API). No
   native build, no per-language grammar install.
+- **Linux (Arch) prerequisite**: a bare `pip install tree-sitter-language-pack` fails on this machine with `error: externally-managed-environment` (PEP 668 — verified here). Use a virtualenv instead (`pipx` is not installed here):
+
+  ```bash
+  python3 -m venv .venv                        # verified working on this machine
+  .venv/bin/pip install tree-sitter-language-pack
+  .venv/bin/python3 scripts/find_untested_sources.py <repo-root>
+  ```
+
+  Both `/usr/bin/python` and `/usr/bin/python3` exist (Python 3.14); the bash examples use `python3` for portability.
 
 ### Usage
+
+#### Linux (bash)
+
+```bash
+# From the skill folder (use .venv/bin/python3 if you installed the wheel into a virtualenv;
+# substitute the quoted <repo-root> placeholder before running)
+python3 scripts/find_untested_sources.py "<repo-root>"
+
+# Restrict to a language (repeatable)
+python3 scripts/find_untested_sources.py "<repo-root>" --lang python --lang typescript
+
+# Truncate the report (top 20 by declared API surface)
+python3 scripts/find_untested_sources.py "<repo-root>" --limit-untested 20 > pairing.json
+
+# Iterate, highest-API-surface first
+jq -r '.untested_sources[:10][] | [.path, .declaration_count, .suggested_test_path] | @tsv' pairing.json
+
+# No jq? Same rows with python3:
+python3 -c 'import json; [print(u["path"], u["declaration_count"], u["suggested_test_path"]) for u in json.load(open("pairing.json"))["untested_sources"][:10]]'
+```
+
+#### Windows (PowerShell)
 
 ```powershell
 # From the skill folder

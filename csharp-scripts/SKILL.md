@@ -6,6 +6,10 @@ license: MIT
 
 # File-Based C# Apps
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+>
+> **This skill has no PowerShell-only steps.** `dotnet <file>.cs` behaves identically in PowerShell on Windows; only the Unix shebang / `chmod +x` section is Linux- and macOS-specific, and it is labelled where it appears.
+
 ## When to Use
 
 - Testing a C# concept, API, or language feature with a quick file-based app
@@ -262,10 +266,24 @@ dotnet project convert hello.cs
 
 If the .NET SDK version is below 10, file-based apps are not available. Use a temporary console project instead:
 
+#### Linux (bash)
+
+*(also works on macOS)*
+
 ```bash
 mkdir -p /tmp/csharp-file-based-app && cd /tmp/csharp-file-based-app
 dotnet new console -o . --force
 ```
+
+#### Windows (PowerShell)
+
+```powershell
+New-Item -ItemType Directory -Force "$env:TEMP/csharp-file-based-app" | Out-Null
+Set-Location "$env:TEMP/csharp-file-based-app"
+dotnet new console -o . --force
+```
+
+#### Next steps (all platforms)
 
 Replace the generated `Program.cs` with the app content and run with `dotnet run`. Add NuGet packages with `dotnet add package <name>`. Remove the directory when done.
 

@@ -6,6 +6,8 @@ license: MIT
 
 # Assertion Diversity Analysis
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Analyze test code in any supported language to measure how varied and meaningful the assertions are. Produce a metrics report that reveals whether tests verify different facets of correctness — not just "output equals X" but also structure, exceptions, state transitions, side effects, and invariants.
 
 > **Language-specific guidance**: Call the `test-analysis-extensions` skill to discover available extension files, then read the file matching the target codebase's language and framework (e.g., `dotnet.md` for .NET, `python.md` for pytest, `typescript.md` for Jest, `go.md` for the standard `testing` package). You MUST read the relevant extension file before classifying assertions, because assertion APIs differ significantly across frameworks.
@@ -55,6 +57,19 @@ Identify the target codebase's language and test framework. Call the `test-analy
 ### Step 2: Gather the test code
 
 Read all test files the user provides. If the user points to a directory or project, scan for all test files using the markers in the language extension file (e.g., `[TestMethod]` for MSTest, `def test_*` for pytest, `it()` / `test()` for Jest, `func TestXxx` for Go).
+
+**Linux (bash)** — quick enumeration of candidate test files before classifying their assertions:
+
+```bash
+# .NET (MSTest / xUnit / NUnit)
+grep -rlE --include='*.cs' '\[(TestMethod|Fact|Theory|Test)\]' .
+# pytest
+grep -rlE --include='*.py' '^[[:space:]]*def test_' .
+# Jest / Vitest
+grep -rlE --include='*.ts' --include='*.tsx' --include='*.js' '\b(it|test)\s*\(' .
+```
+
+This skill issues no PowerShell-only commands: the code under analysis is read with the agent's own file tools, so the workflow runs unchanged on Linux. (On Windows the same `grep` works from Git Bash or WSL.)
 
 ### Step 3: Classify every assertion
 

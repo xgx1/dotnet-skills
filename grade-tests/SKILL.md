@@ -18,6 +18,8 @@ license: MIT
 
 # Grade Tests
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Grade a curated list of test methods and produce a compact, PR-comment-friendly
 report: one row per test method with a letter grade, a score band, and a
 one-line note explaining the grade. The skill **does not discover tests on its

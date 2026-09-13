@@ -6,7 +6,11 @@ license: MIT
 
 # Test Trait Tagging
 
+> **Platform**: this machine runs Linux (Arch) — `bash` blocks are the default and directly executable. Windows-only steps live in `Windows (PowerShell)` subsections and are not mixed into Linux instructions.
+
 Analyze an existing test suite in any supported language and apply a standardized set of trait tags to each test method, giving teams visibility into their test distribution (positive vs. negative, critical-path coverage, smoke tests, etc.).
+
+> **Framework examples are test *source*, not shell commands**: the snippets below illustrate each framework's tag syntax (C#, Python, Java, Ruby, Kotlin, Swift, C++, and Pester/PowerShell). A `powershell` fence here means "a Pester test written in PowerShell", not "run this on Windows" — it is a test-framework example, and Pester tests themselves are run with `pwsh` (PowerShell 7+), which is not installed on this machine.
 
 > **Language-specific guidance**: Call the `test-analysis-extensions` skill to discover available extension files, then read the file matching the target codebase. The extension file documents framework-specific tag attributes and a "tag-support capability" (auto-edit, report-only, or convention-based) that drives whether this skill modifies source files or only emits a report.
 
@@ -169,7 +173,7 @@ it "rejects null input", :negative, :boundary do
 end
 ```
 
-**Pester:**
+**Pester:** (Pester test source — PowerShell test code, not a shell command block)
 ```powershell
 It 'Rejects null input' -Tag 'negative','boundary' {
     ...
