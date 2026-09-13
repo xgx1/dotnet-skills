@@ -3,10 +3,12 @@
 DSH 技能分组仓：**dotnet-skills**
 
 - **上游**：https://github.com/dotnet/skills
-- **说明**：本仓内容以本机实际使用的版本为准（可能已对上游做过改名/翻译/本机适配）。
-  上游只作祖先与对照——**不要用上游覆盖本地**（见 MyAI `docs/adr/0006`）。
+- **结构**：本仓的树 = **上游最新树**（2026-09-13 起对齐），上游的目录层级原样保留。
+  本地改动叠在对应文件上（改中文、平台分节、改 frontmatter 的 `name:` 等）——
+  `git diff upstream/main` 就是「本机改了什么」的权威答案。
+- **本文件**（`README.dsh-local.md`）是本地附加的说明，上游没有；上游的 `README.md` 原样保留。
 
-## 内容
+## 本机改写过的技能（92 个）
 
 - `analyzing-dotnet-performance`
 - `android-tombstone-symbolication`
@@ -42,7 +44,6 @@ DSH 技能分组仓：**dotnet-skills**
 - `dump-collect`
 - `eval-performance`
 - `exp-mock-usage-analysis`
-- `exp-simd-vectorization`
 - `exp-test-maintainability`
 - `extension-points`
 - `fetch-and-send-data`
@@ -60,10 +61,6 @@ DSH 技能分组仓：**dotnet-skills**
 - `maui-safe-area`
 - `maui-shell-navigation`
 - `maui-theming`
-- `mcp-csharp-create`
-- `mcp-csharp-debug`
-- `mcp-csharp-publish`
-- `mcp-csharp-test`
 - `microbenchmarking`
 - `migrate-dotnet10-to-dotnet11`
 - `migrate-dotnet8-to-dotnet9`
@@ -78,7 +75,6 @@ DSH 技能分组仓：**dotnet-skills**
 - `minimal-api-file-upload`
 - `msbuild-antipatterns`
 - `msbuild-modernization`
-- `msbuild-server`
 - `mtp-hot-reload`
 - `nuget-trusted-publishing`
 - `optimizing-ef-core-queries`
