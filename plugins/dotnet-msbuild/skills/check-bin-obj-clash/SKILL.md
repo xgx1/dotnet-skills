@@ -78,7 +78,7 @@ Use this only when the MCP server cannot be started.
 ### Step 2: Replay the Binary Log to Text
 
 ```bash
-dotnet msbuild build.binlog -noconlog -fl -flp:v=diag;logfile=full.log
+dotnet msbuild build.binlog -noconlog -fl "-flp:v=diag;logfile=full.log"
 ```
 
 ### Step 3: List All Projects
