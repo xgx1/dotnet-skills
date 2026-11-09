@@ -1,6 +1,6 @@
 ---
 name: build-perf-baseline
-description: "Establish build performance baselines and apply systematic optimization techniques. USE FOR: diagnosing slow builds, establishing before/after measurements (cold, warm, no-op scenarios), applying optimization strategies like MSBuild Server, static graph builds, artifacts output, and dependency graph trimming. Start here before diving into build-perf-diagnostics, incremental-build, or build-parallelism. DO NOT USE FOR: non-MSBuild build systems, detailed bottleneck analysis (use build-perf-diagnostics after baselining)."
+description: "Establish MSBuild/.NET baselines before optimizing. USE FOR: unranked slow builds; cold/warm/incremental/no-op measurements; before/after comparisons; CI caching; static graph, artifacts output, dependency graph trimming. DO NOT USE FOR: measured bottlenecks (build-perf-diagnostics), known repeated restores (eliminate-redundant-restores), within-build duplicate calls (find-repeated-work-within-one-build), non-MSBuild builds."
 license: MIT
 ---
 
